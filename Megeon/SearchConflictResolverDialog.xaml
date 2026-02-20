@@ -1,0 +1,29 @@
+﻿<Window x:Class="Megeon.SearchConflictResolverDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Megeon"
+        WindowStartupLocation="CenterScreen"
+        mc:Ignorable="d"
+        Title="Выбор вариант совпадения" Height="191" Width="618">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock FontSize="18" Text="{Binding ModelToFind}" d:Text="МЕГЕОН 000000" Foreground="Navy" FontWeight="Bold" Grid.Row="0"/>
+        <ListBox ItemsSource="{Binding Items}" 
+                 SelectedValue="{Binding SelectedItem}"
+                 Grid.Row="1" x:Name="radioGroupPanel">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <RadioButton GroupName="selected_title_group" Content="{Binding}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ListBox>
+        <Button Grid.Row="2" HorizontalAlignment="Center" Margin="8" Padding="20 5" Click="Button_Click" >Выбрать</Button>
+    </Grid>
+</Window>
