@@ -264,7 +264,7 @@ public class ExportFormatter
                 var dim = kvp.Value;
                 string product_id = $"(SELECT product_id FROM oc_product WHERE model = '{kvp.Key}')";
 
-                sb.AppendLine($"UPDATE IGNORE oc_product SET length = {dim.Length}, width = {dim.Width}, height = {dim.Height}, weight = {dim.Weight} WHERE product_id = {product_id};");
+                sb.AppendLine($"UPDATE IGNORE oc_product SET length = {dim.Length}, width = {dim.Width}, height = {dim.Height}, weight = {dim.Weight} WHERE model = '{kvp.Key}';");
             }
         }
         else
@@ -275,7 +275,7 @@ public class ExportFormatter
                 {
                     string product_id = $"(SELECT product_id FROM oc_product WHERE model = '{p.Model}')";
 
-                    sb.AppendLine($"UPDATE IGNORE oc_product SET length = {dim.Length}, width = {dim.Width}, height = {dim.Height}, weight = {dim.Weight} WHERE product_id = {product_id};");
+                    sb.AppendLine($"UPDATE IGNORE oc_product SET length = {dim.Length}, width = {dim.Width}, height = {dim.Height}, weight = {dim.Weight} WHERE model = '{p.Model}';");
                 }
             }
         }
