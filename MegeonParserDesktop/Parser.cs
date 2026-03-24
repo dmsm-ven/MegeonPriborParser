@@ -119,14 +119,24 @@ public class ProductParser
             Dictionary<string, string> titleToHref = results
                 .ToDictionary(a => a.InnerText.TrimHtml(), a => HOST + a.GetAttributeValue("href", null));
 
-            throw new NotImplementedException();
-            //string selectedTitle = await ConflictResolver(titleToHref.Keys.ToList());
-            //if (selectedTitle != null)
-            //{
-            //    var p = new Product() { Uri = titleToHref[selectedTitle] };
-            //    await ParseProductDetails(p);
-            //    return p;
-            //}
+            var fullMatch = titleToHref.Keys.Count(title => title.Contains(model));
+
+            if (fullMatch == 1)
+            {
+                var title = titleToHref.Keys.Single(title => title.Contains(model));
+                var p = new Product() { Uri = titleToHref[title] };
+            }
+            else
+            {
+                throw new NotImplementedException();
+                //string selectedTitle = await ConflictResolver(titleToHref.Keys.ToList());
+                //if (selectedTitle != null)
+                //{
+                //    var p = new Product() { Uri = titleToHref[selectedTitle] };
+                //    await ParseProductDetails(p);
+                //    return p;
+                //}
+            }
         }
 
         return null;

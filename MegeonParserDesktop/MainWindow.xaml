@@ -25,6 +25,10 @@
                 <TextBox x:Name="txtDownloadFolderPath" Margin="4"/>
             </DockPanel>
             <StackPanel Orientation="Horizontal">
+                <TextBlock Text="StartID: " Margin="4" />
+                <TextBox x:Name="txtStartId" Text="-1" MinWidth="80" Margin="4" TextChanged="txtStartId_TextChanged"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
                 <Button x:Name="btnExportGeneral" Content="Товары" Click="btnExportGeneral_Click" />
                 <Button x:Name="btnAdditionalImages" Content="Доп. изображения" Click="btnAdditionalImages_Click" />
                 <Button x:Name="btnGetDescriptionUpdate" Content="DESK Update" Click="btnGetDescriptionUpdate_Click" />

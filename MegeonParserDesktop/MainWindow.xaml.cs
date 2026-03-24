@@ -102,4 +102,12 @@ public partial class MainWindow : Window
             btnDimensions.IsEnabled = true;
         }
     }
+
+    private void txtStartId_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        if (int.TryParse(txtStartId.Text, out var id) && manager != null)
+        {
+            manager.START_ETK_ID = id;
+        }
+    }
 }
