@@ -17,6 +17,15 @@ public partial class MainWindow : Window
             txtDownloadFolderPath.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
             var credentials = File.ReadAllText("price_list_credentials.txt");
             manager = new ExportManager("products.json", credentials);
+            manager.parser.conflictResolver = (searchText, options) =>
+            {
+                var w = new ConflictResolverWindow();
+                w.lbAvailableVariants.ItemsSource = options;
+                w.Title = $"Критерий поиска: {searchText}";
+                w.ShowDialog();
+                var selected = w.lbAvailableVariants.SelectedItem as string;
+                return selected;
+            };
         };
     }
 
@@ -26,6 +35,7 @@ public partial class MainWindow : Window
         try
         {
             await manager.Parse(new Progress<double>(v => pbIndicator.Value = v));
+
             IsEnabled = true;
         }
         catch (Exception ex)

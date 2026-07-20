@@ -14,6 +14,8 @@ public class ProductParser
     private readonly string HOST = "http://www.megeon-pribor.ru";
     public string CurrentModel { get; private set; }
 
+    public Func<string, string[], string> conflictResolver { get; set; }
+
     private HttpClient CreateHttpClient()
     {
         handler = new HttpClientHandler()
@@ -125,17 +127,18 @@ public class ProductParser
             {
                 var title = titleToHref.Keys.Single(title => title.Contains(model));
                 var p = new Product() { Uri = titleToHref[title] };
+                await ParseProductDetails(p);
+                return p;
             }
             else
             {
-                throw new NotImplementedException();
-                //string selectedTitle = await ConflictResolver(titleToHref.Keys.ToList());
-                //if (selectedTitle != null)
-                //{
-                //    var p = new Product() { Uri = titleToHref[selectedTitle] };
-                //    await ParseProductDetails(p);
-                //    return p;
-                //}
+                string selectedTitle = conflictResolver.Invoke(model, titleToHref.Keys.ToArray());
+                if (selectedTitle != null)
+                {
+                    var p = new Product() { Uri = titleToHref[selectedTitle] };
+                    await ParseProductDetails(p);
+                    return p;
+                }
             }
         }
 

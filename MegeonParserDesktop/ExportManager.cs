@@ -9,7 +9,7 @@ namespace MegeonParserDesktop;
 public class ExportManager
 {
     private readonly JsonSerializerOptions jsonOptions;
-    private readonly ProductParser parser;
+    public readonly ProductParser parser;
     public static readonly string HOST = "http://www.megeon-pribor.ru";
     private readonly string _storageFile;
     private readonly ExportFormatter formatter;

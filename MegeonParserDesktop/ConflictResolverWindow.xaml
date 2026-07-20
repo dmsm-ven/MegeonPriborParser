@@ -1,0 +1,17 @@
+﻿<Window x:Class="MegeonParserDesktop.ConflictResolverWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MegeonParserDesktop"
+        mc:Ignorable="d"
+        Title="ConflictResolverWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <ListBox x:Name="lbAvailableVariants" Grid.Row="0"/>
+        <Button x:Name="btnSelect" Grid.Row="1" Content="Select" Click="btnSelect_Click"/>
+    </Grid>
+</Window>
