@@ -21,17 +21,24 @@ public class ProductParser
         handler = new HttpClientHandler()
         {
             AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            AutomaticDecompression = DecompressionMethods.All,
             UseCookies = true,
             CookieContainer = new CookieContainer()
         };
 
         client = new HttpClient(handler);
         client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
-        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36");
+        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36");
         client.DefaultRequestHeaders.Add("HOST", "www.megeon-pribor.ru");
-        client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+        client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br, zstd");
         client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+        client.DefaultRequestHeaders.Add("upgrade-insecure-requests", "1");
+        client.DefaultRequestHeaders.Add("sec-ch-ua", "\"Google Chrome\";v=\"153\", \"Not_A Brand\";v=\"8\", \"Chromium\";v=\"153\"");
+        client.DefaultRequestHeaders.Add("sec-ch-ua-mobile", "?0");
+        client.DefaultRequestHeaders.Add("sec-ch-ua-platform", "\"Windows\"");
+        client.DefaultRequestHeaders.Add("sec-fetch-dest", "document");
+        client.DefaultRequestHeaders.Add("sec-fetch-mode", "navigate");
+        client.DefaultRequestHeaders.Add("sec-fetch-site", "?1");
         client.DefaultRequestHeaders.Add("upgrade-insecure-requests", "1");
         return client;
     }
@@ -82,8 +89,15 @@ public class ProductParser
 
         using (var client = CreateHttpClient())
         {
-            await client.GetStringAsync("https://www.megeon-pribor.ru/");
+            //how i can catch error with message: System.Net.Http.HttpRequestException: 'Response status code does not indicate success: 301 (Moved Permanently).'
+            try
+            {
+                var res = await client.GetStringAsync("https://www.megeon-pribor.ru/");
+            }
+            catch
+            {
 
+            }
             IEnumerable<Cookie> responseCookies = handler.CookieContainer.GetCookies(new Uri("http://www.megeon-pribor.ru")).Cast<Cookie>();
             foreach (var c in responseCookies)
             {
