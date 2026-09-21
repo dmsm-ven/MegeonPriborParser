@@ -29,7 +29,7 @@ public class ProductParser
         client = new HttpClient(handler);
         client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36");
-        client.DefaultRequestHeaders.Add("HOST", "www.megeon-pribor.ru");
+        //client.DefaultRequestHeaders.Add("HOST", "www.megeon-pribor.ru");
         client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br, zstd");
         client.DefaultRequestHeaders.Add("Connection", "keep-alive");
         client.DefaultRequestHeaders.Add("upgrade-insecure-requests", "1");
@@ -89,15 +89,8 @@ public class ProductParser
 
         using (var client = CreateHttpClient())
         {
-            //how i can catch error with message: System.Net.Http.HttpRequestException: 'Response status code does not indicate success: 301 (Moved Permanently).'
-            try
-            {
-                var res = await client.GetStringAsync("https://www.megeon-pribor.ru/");
-            }
-            catch
-            {
+            await client.GetStringAsync("https://www.megeon-pribor.ru/");
 
-            }
             IEnumerable<Cookie> responseCookies = handler.CookieContainer.GetCookies(new Uri("http://www.megeon-pribor.ru")).Cast<Cookie>();
             foreach (var c in responseCookies)
             {
@@ -147,12 +140,19 @@ public class ProductParser
             else
             {
                 string selectedTitle = conflictResolver.Invoke(model, titleToHref.Keys.ToArray());
-                if (selectedTitle != null)
+
+                var p = new Product();
+
+                if (selectedTitle.StartsWith("https"))
                 {
-                    var p = new Product() { Uri = titleToHref[selectedTitle] };
-                    await ParseProductDetails(p);
-                    return p;
+                    p.Uri = selectedTitle;
                 }
+                else if (!string.IsNullOrWhiteSpace(selectedTitle))
+                {
+                    p.Uri = titleToHref[selectedTitle];
+                }
+                await ParseProductDetails(p);
+                return p;
             }
         }
 

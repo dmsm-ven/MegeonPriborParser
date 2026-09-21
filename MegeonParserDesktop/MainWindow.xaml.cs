@@ -23,8 +23,8 @@ public partial class MainWindow : Window
                 w.lbAvailableVariants.ItemsSource = options;
                 w.Title = $"Критерий поиска: {searchText}";
                 w.ShowDialog();
-                var selected = w.lbAvailableVariants.SelectedItem as string;
-                return selected;
+
+                return !string.IsNullOrWhiteSpace(w.SelectedCustomUri) ? w.SelectedCustomUri : w.SelectedProductTitle;
             };
         };
     }
@@ -119,5 +119,10 @@ public partial class MainWindow : Window
         {
             manager.START_ETK_ID = id;
         }
+    }
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        MessageBox.Show("Исправить автоматический поиск товара (выдает на странице дефолтные товары), и нужно вручную указывать URL товара через Custom textbox");
     }
 }
