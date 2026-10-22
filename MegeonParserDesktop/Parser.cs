@@ -1,4 +1,4 @@
-﻿using HtmlAgilityPack;
+using HtmlAgilityPack;
 using MegeonParserDesktop.Models;
 using System.IO;
 using System.Net;
@@ -11,7 +11,7 @@ public class ProductParser
     private HttpClient client;
     private HttpClientHandler handler;
 
-    private readonly string HOST = "http://www.megeon-pribor.ru";
+    private readonly string HOST = "https://megeon-pribor.ru";
     public string CurrentModel { get; private set; }
 
     public Func<string, string[], string> conflictResolver { get; set; }
@@ -20,27 +20,61 @@ public class ProductParser
     {
         handler = new HttpClientHandler()
         {
-            AllowAutoRedirect = true,
-            AutomaticDecompression = DecompressionMethods.All,
+            // Редиректы обрабатываем вручную: при автоматическом 301/302 POST превращается в GET
+            // и тело формы теряется -> сайт отдает дефолтный список товаров.
+            AllowAutoRedirect = false,
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli,
             UseCookies = true,
             CookieContainer = new CookieContainer()
         };
 
         client = new HttpClient(handler);
-        client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+        client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
+        client.DefaultRequestHeaders.Add("Accept-Language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7");
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36");
-        //client.DefaultRequestHeaders.Add("HOST", "www.megeon-pribor.ru");
-        client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br, zstd");
-        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-        client.DefaultRequestHeaders.Add("upgrade-insecure-requests", "1");
-        client.DefaultRequestHeaders.Add("sec-ch-ua", "\"Google Chrome\";v=\"153\", \"Not_A Brand\";v=\"8\", \"Chromium\";v=\"153\"");
-        client.DefaultRequestHeaders.Add("sec-ch-ua-mobile", "?0");
-        client.DefaultRequestHeaders.Add("sec-ch-ua-platform", "\"Windows\"");
-        client.DefaultRequestHeaders.Add("sec-fetch-dest", "document");
-        client.DefaultRequestHeaders.Add("sec-fetch-mode", "navigate");
-        client.DefaultRequestHeaders.Add("sec-fetch-site", "?1");
-        client.DefaultRequestHeaders.Add("upgrade-insecure-requests", "1");
+        client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
         return client;
+    }
+
+    // GET с ручным следованием редиректам
+    private async Task<string> GetStringFollowingRedirects(HttpClient c, string url)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            using var resp = await c.GetAsync(url);
+            if ((int)resp.StatusCode is >= 300 and < 400 && resp.Headers.Location != null)
+            {
+                url = new Uri(new Uri(url), resp.Headers.Location).ToString();
+                continue;
+            }
+            resp.EnsureSuccessStatusCode();
+            return await resp.Content.ReadAsStringAsync();
+        }
+        throw new InvalidOperationException("Слишком много редиректов: " + url);
+    }
+
+    // POST с сохранением метода и тела при редиректах (301/302/303/307/308)
+    private async Task<string> PostFormFollowingRedirects(HttpClient c, string url, IEnumerable<KeyValuePair<string, string>> form)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new FormUrlEncodedContent(form)
+            };
+            req.Headers.Referrer = new Uri(HOST + "/");
+            req.Headers.Add("Origin", HOST);
+
+            using var resp = await c.SendAsync(req);
+            if ((int)resp.StatusCode is >= 300 and < 400 && resp.Headers.Location != null)
+            {
+                url = new Uri(new Uri(url), resp.Headers.Location).ToString();
+                continue;
+            }
+            resp.EnsureSuccessStatusCode();
+            return await resp.Content.ReadAsStringAsync();
+        }
+        throw new InvalidOperationException("Слишком много редиректов: " + url);
     }
 
     public async Task<List<Product>> Parse(IEnumerable<string> modelsToParse,
@@ -79,30 +113,25 @@ public class ProductParser
 
     private async Task<Product> SearchAndParse(string model)
     {
-        var formContent = new FormUrlEncodedContent(new[]
+        var form = new[]
         {
             new KeyValuePair<string, string>("setsearchdata", "1"),
             new KeyValuePair<string, string>("category_id", "0"),
             new KeyValuePair<string, string>("search_type", "exact"),
             new KeyValuePair<string, string>("search", model),
-        });
+        };
 
         using (var client = CreateHttpClient())
         {
-            await client.GetStringAsync("https://www.megeon-pribor.ru/");
+            // получаем сессионные cookie сайта (PHPSESSID и т.п.)
+            await GetStringFollowingRedirects(client, HOST + "/");
 
-            IEnumerable<Cookie> responseCookies = handler.CookieContainer.GetCookies(new Uri("http://www.megeon-pribor.ru")).Cast<Cookie>();
-            foreach (var c in responseCookies)
-            {
-                var x = c;
-            }
-
-
-            var response = await client.PostAsync("https://www.megeon-pribor.ru/katalog/search/result", formContent);
-            string responseString = await response.Content.ReadAsStringAsync();
+            string responseString = await PostFormFollowingRedirects(client, HOST + "/katalog/search/result", form);
 
             var doc = new HtmlDocument();
             doc.LoadHtml(responseString);
+
+            try { File.WriteAllText("last_search_response.html", responseString); } catch { }
 
             Product p = await FindValidProduct(model, doc);
             return p;
@@ -205,7 +234,7 @@ public class ProductParser
         {
             var doc = new HtmlDocument();
 
-            var str = await client.GetStringAsync(uri);
+            var str = await GetStringFollowingRedirects(client, uri);
 
             doc.LoadHtml(str);
             return doc;
