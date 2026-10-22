@@ -123,6 +123,6 @@ public partial class MainWindow : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Исправить автоматический поиск товара (выдает на странице дефолтные товары), и нужно вручную указывать URL товара через Custom textbox");
+        //MessageBox.Show("");
     }
 }
